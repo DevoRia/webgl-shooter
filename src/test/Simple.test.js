@@ -1,0 +1,13 @@
+describe('Simple Test', () => {
+    test('should pass basic test', () => {
+        expect(1 + 1).toBe(2);
+    });
+    
+    test('should handle basic math', () => {
+        expect(5 * 3).toBe(15);
+    });
+    
+    test('should handle strings', () => {
+        expect('hello' + ' world').toBe('hello world');
+    });
+}); 
