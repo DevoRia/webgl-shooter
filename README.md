@@ -2,6 +2,21 @@
 
 A modern browser-based first-person shooter game built with Three.js and WebGL. Features smooth 3D graphics, responsive controls, and comprehensive test coverage.
 
+## 🎮 [Play Now](https://devoria.github.io/webgl-shooter/)
+
+**Live Demo:** [https://devoria.github.io/webgl-shooter/](https://devoria.github.io/webgl-shooter/)
+
+## 📸 Screenshots
+
+### Start Screen
+![Start Screen](screenshots/start-screen.png)
+
+### Gameplay
+![Gameplay](screenshots/gameplay.png)
+
+### Active Gameplay
+![Active Gameplay](screenshots/gameplay-2.png)
+
 ## 🎮 Features
 
 - **First-Person Shooter Gameplay**: Move with WASD, look around with mouse, shoot with clicks
