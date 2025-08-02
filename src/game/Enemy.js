@@ -1,24 +1,39 @@
 import * as THREE from 'three';
 
 export class Enemy {
-    constructor() {
-        this.speed = 2;
-        this.health = 100;
-        this.damage = 20;
+    constructor(levelData = null) {
+        // Базові параметри
+        this.baseSpeed = 3;
+        this.baseHealth = 80;
+        this.baseDamage = 25;
         this.detectionRange = 15;
         this.attackRange = 2;
+        
+        // Параметри з рівня (якщо передані)
+        if (levelData) {
+            this.speed = levelData.enemySpeed || this.baseSpeed;
+            this.health = levelData.enemyHealth || this.baseHealth;
+            this.damage = levelData.enemyDamage || this.baseDamage;
+            this.color = levelData.color || 0xff0000;
+        } else {
+            this.speed = this.baseSpeed;
+            this.health = this.baseHealth;
+            this.damage = this.baseDamage;
+            this.color = 0xff0000;
+        }
         
         this.mesh = null;
         this.target = null;
         this.state = 'patrol'; // patrol, chase, attack
+        this.maxHealth = this.health; // Зберігаємо максимальне здоров'я для відображення
         
         this.setupMesh();
     }
     
     setupMesh() {
-        // Create enemy body (red cube)
+        // Create enemy body з кольором рівня
         const geometry = new THREE.BoxGeometry(1, 2, 1);
-        const material = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+        const material = new THREE.MeshLambertMaterial({ color: this.color });
         this.mesh = new THREE.Mesh(geometry, material);
         
         this.mesh.castShadow = true;
@@ -123,7 +138,7 @@ export class Enemy {
         // Visual feedback for damage
         this.mesh.material.color.setHex(0xff6666);
         setTimeout(() => {
-            this.mesh.material.color.setHex(0xff0000);
+            this.mesh.material.color.setHex(this.color);
         }, 100);
         
         return this.health <= 0;
@@ -137,7 +152,27 @@ export class Enemy {
         return this.health;
     }
     
+    getMaxHealth() {
+        return this.maxHealth;
+    }
+    
+    getHealthPercentage() {
+        return this.health / this.maxHealth;
+    }
+    
     isDead() {
         return this.health <= 0;
+    }
+    
+    getDamage() {
+        return this.damage;
+    }
+    
+    getSpeed() {
+        return this.speed;
+    }
+    
+    getColor() {
+        return this.color;
     }
 } 

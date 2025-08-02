@@ -3,6 +3,8 @@ export class UIManager {
         this.scoreElement = document.getElementById('score');
         this.healthElement = document.getElementById('health');
         this.ammoElement = document.getElementById('ammo');
+        this.levelElement = document.getElementById('level');
+        this.progressElement = document.getElementById('progress');
         this.mouseStatusElement = document.getElementById('mouseStatus');
         this.startScreen = document.getElementById('startScreen');
         this.gameOverScreen = document.getElementById('gameOver');
@@ -13,6 +15,26 @@ export class UIManager {
     updateScore(score) {
         if (this.scoreElement) {
             this.scoreElement.textContent = `Score: ${score}`;
+        }
+    }
+    
+    updateLevel(level, progress = null) {
+        if (this.levelElement) {
+            this.levelElement.textContent = `Level: ${level}`;
+        }
+        
+        if (this.progressElement && progress !== null) {
+            const progressPercent = Math.round(progress * 100);
+            this.progressElement.textContent = `Progress: ${progressPercent}%`;
+            
+            // Змінюємо колір прогресу
+            if (progressPercent >= 80) {
+                this.progressElement.style.color = '#00ff00';
+            } else if (progressPercent >= 50) {
+                this.progressElement.style.color = '#ffff00';
+            } else {
+                this.progressElement.style.color = '#ffffff';
+            }
         }
     }
     

@@ -51,6 +51,15 @@ class WebGLShooter {
         this.game.onAmmoUpdate = (ammo) => this.uiManager.updateAmmo(ammo);
         this.game.onGameOver = (finalScore) => this.handleGameOver(finalScore);
         
+        // Оновлюємо інформацію про рівень кожну секунду
+        this.levelUpdateInterval = setInterval(() => {
+            if (this.game && this.isGameRunning) {
+                const level = this.game.getCurrentLevel();
+                const progress = this.game.getProgressToNextLevel();
+                this.uiManager.updateLevel(level, progress);
+            }
+        }, 1000);
+        
         console.log('Starting game loop...');
         this.game.start();
         console.log('Game started successfully');
@@ -65,6 +74,12 @@ class WebGLShooter {
         this.isGameRunning = false;
         this.uiManager.hideCrosshair();
         this.uiManager.showGameOver(finalScore);
+        
+        // Очищаємо інтервал оновлення рівня
+        if (this.levelUpdateInterval) {
+            clearInterval(this.levelUpdateInterval);
+            this.levelUpdateInterval = null;
+        }
         
         if (this.game) {
             this.game.dispose();

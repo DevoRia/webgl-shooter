@@ -21,6 +21,7 @@ export class AudioManager {
         this.createEnemyHitSound();
         this.createPlayerHitSound();
         this.createEmptySound();
+        this.createLevelUpSound();
     }
     
     createShootSound() {
@@ -87,6 +88,24 @@ export class AudioManager {
         this.sounds.empty = { oscillator, gainNode, duration: 0.1 };
     }
     
+    createLevelUpSound() {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        // Створюємо звук рівня з підвищенням частоти
+        oscillator.frequency.setValueAtTime(400, this.audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(800, this.audioContext.currentTime + 0.2);
+        oscillator.frequency.exponentialRampToValueAtTime(1200, this.audioContext.currentTime + 0.4);
+        
+        gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.5);
+        
+        this.sounds.levelUp = { oscillator, gainNode, duration: 0.5 };
+    }
+    
     playSound(soundName) {
         if (this.isMuted || !this.sounds[soundName]) return;
         
@@ -121,6 +140,12 @@ export class AudioManager {
             oscillator.frequency.setValueAtTime(150, currentTime + 0.1);
             gainNode.gain.setValueAtTime(0.2 * this.masterVolume, currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + 0.1);
+        } else if (soundName === 'levelUp') {
+            oscillator.frequency.setValueAtTime(400, currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(800, currentTime + 0.2);
+            oscillator.frequency.exponentialRampToValueAtTime(1200, currentTime + 0.4);
+            gainNode.gain.setValueAtTime(0.3 * this.masterVolume, currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + 0.5);
         }
         
         // Start and stop the sound

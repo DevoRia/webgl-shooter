@@ -6,6 +6,7 @@ import { InputManager } from '../input/InputManager.js';
 import { CollisionManager } from './CollisionManager.js';
 import { AudioManager } from '../audio/AudioManager.js';
 import { UIManager } from '../ui/UIManager.js';
+import { LevelManager } from './LevelManager.js';
 
 export class Game {
     constructor() {
@@ -18,9 +19,9 @@ export class Game {
         this.inputManager = null;
         this.collisionManager = null;
         this.audioManager = null;
+        this.levelManager = null;
         this.clock = new THREE.Clock();
         
-        this.score = 0;
         this.health = 100;
         this.ammo = 30;
         this.maxAmmo = 30;
@@ -42,6 +43,7 @@ export class Game {
         this.setupLights();
         this.setupPlayer();
         this.setupManagers();
+        this.setupLevelManager();
         this.setupEventListeners();
     }
     
@@ -155,6 +157,21 @@ export class Game {
         this.collisionManager = new CollisionManager();
         this.audioManager = new AudioManager();
         this.uiManager = new UIManager();
+    }
+    
+    setupLevelManager() {
+        this.levelManager = new LevelManager();
+        
+        // Налаштовуємо callbacks для LevelManager
+        this.levelManager.onScoreUpdate = (score) => {
+            if (this.onScoreUpdate) {
+                this.onScoreUpdate(score);
+            }
+        };
+        
+        this.levelManager.onLevelUp = (level, levelData) => {
+            this.handleLevelUp(level, levelData);
+        };
     }
     
     setupEventListeners() {
@@ -312,8 +329,7 @@ export class Game {
             this.enemies.forEach((enemy, enemyIndex) => {
                 if (this.collisionManager.checkCollision(bullet.mesh, enemy.mesh)) {
                     // Enemy hit
-                    this.score += 10;
-                    this.updateScore();
+                    this.levelManager.addScore(10);
                     
                     // Remove bullet and enemy
                     this.bullets.splice(bulletIndex, 1);
@@ -330,7 +346,7 @@ export class Game {
         this.enemies.forEach((enemy, index) => {
             if (this.collisionManager.checkCollision(this.player.mesh, enemy.mesh)) {
                 // Player hit
-                this.health -= 20;
+                this.health -= enemy.getDamage();
                 this.updateHealth();
                 
                 // Remove enemy
@@ -350,7 +366,15 @@ export class Game {
         const spawnEnemy = () => {
             if (this.isGameOver) return;
             
-            const enemy = new Enemy();
+            const levelData = this.levelManager.getCurrentLevelData();
+            
+            // Перевіряємо чи не перевищено максимальну кількість ворогів
+            if (this.enemies.length >= levelData.maxEnemies) {
+                setTimeout(spawnEnemy, 1000);
+                return;
+            }
+            
+            const enemy = new Enemy(levelData);
             const angle = Math.random() * Math.PI * 2;
             const distance = 20 + Math.random() * 30;
             
@@ -363,21 +387,84 @@ export class Game {
             this.enemies.push(enemy);
             this.scene.add(enemy.mesh);
             
-            // Schedule next spawn
-            setTimeout(spawnEnemy, 2000 + Math.random() * 3000);
+            // Schedule next spawn based on level spawn rate
+            const spawnDelay = (levelData.enemySpawnRate * 1000) + Math.random() * 500; // Зменшили випадковий час
+            setTimeout(spawnEnemy, spawnDelay);
         };
         
-        spawnEnemy();
+        // Спочатку створюємо кілька ворогів одразу
+        const initialEnemies = 3;
+        for (let i = 0; i < initialEnemies; i++) {
+            setTimeout(() => {
+                if (!this.isGameOver) {
+                    const levelData = this.levelManager.getCurrentLevelData();
+                    const enemy = new Enemy(levelData);
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = 20 + Math.random() * 30;
+                    
+                    enemy.mesh.position.set(
+                        Math.cos(angle) * distance,
+                        1,
+                        Math.sin(angle) * distance
+                    );
+                    
+                    this.enemies.push(enemy);
+                    this.scene.add(enemy.mesh);
+                }
+            }, i * 500); // Кожен ворог з'являється через 0.5 секунди
+        }
+        
+        // Починаємо регулярний спавн через 2 секунди
+        setTimeout(spawnEnemy, 2000);
     }
     
     updateEnemySpawning(deltaTime) {
         // This could be expanded for more complex spawning logic
     }
     
+    handleLevelUp(level, levelData) {
+        // Показуємо повідомлення про новий рівень
+        this.uiManager.showMessage(`LEVEL ${level} REACHED!`, 3000);
+        
+        // Змінюємо колір неба для нового рівня
+        const skyColors = [
+            0x87CEEB, // Синій - рівень 1
+            0xFFA500, // Помаранчевий - рівень 2
+            0xFFFF00, // Жовтий - рівень 3
+            0x00FF00, // Зелений - рівень 4
+            0x00FFFF, // Ціан - рівень 5
+            0xFF00FF, // Маджента - рівень 6
+            0xFFFFFF, // Білий - рівень 7+
+        ];
+        
+        const skyColor = skyColors[Math.min(level - 1, skyColors.length - 1)];
+        this.scene.background = new THREE.Color(skyColor);
+        this.scene.fog = new THREE.Fog(skyColor, 50, 200);
+        
+        // Граємо звук рівня
+        this.audioManager.playSound('levelUp');
+    }
+    
     updateScore() {
         if (this.onScoreUpdate) {
-            this.onScoreUpdate(this.score);
+            this.onScoreUpdate(this.levelManager.getScore());
         }
+    }
+    
+    getCurrentLevel() {
+        return this.levelManager.getCurrentLevel();
+    }
+    
+    getCurrentLevelData() {
+        return this.levelManager.getCurrentLevelData();
+    }
+    
+    getProgressToNextLevel() {
+        return this.levelManager.getProgressToNextLevel();
+    }
+    
+    getFibonacciNumber(level) {
+        return this.levelManager.getFibonacciNumber(level);
     }
     
     updateHealth() {
@@ -397,7 +484,7 @@ export class Game {
         this.uiManager.hideMapBoundaries();
         
         if (this.onGameOver) {
-            this.onGameOver(this.score);
+            this.onGameOver(this.levelManager.getScore());
         }
     }
     
